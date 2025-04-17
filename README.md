@@ -32,31 +32,37 @@ To use this module, ensure you have Node.js and npm (or yarn) installed.
 ## Usage
 
 ```typescript
-import { RepoUtils, FileSystemUtils } from 'choco-package';
+import { ChocoRepoTransferService, ChocoFileSystemHelper, ChocoGitClient } from 'choco-package';
 
 async function main() {
-  const repoUtils = new RepoUtils();
-  const fileSystemUtils = new FileSystemUtils(); // Example usage
-  const repoUrl = '[https://github.com/example/example-repo.git](https://github.com/example/example-repo.git';
+  const repoTransferService = new ChocoRepoTransferService();
+  const fileSystemHelper = new ChocoFileSystemHelper();
+  const gitClient = new ChocoGitClient();
+
+  const repoUrl = '[https://github.com/example/example-repo.git](https://github.com/example/example-repo.git)';
   const destinationDir = './destination-directory';
 
   try {
     // Transfer all content
-    await repoUtils.transferRepoContents(repoUrl, destinationDir);
+    await repoTransferService.chocoTransferRepoContents(repoUrl, destinationDir);
     console.log(`Repository content transferred to ${destinationDir}.`);
 
     // Copy specific items
     const itemsToCopy = ['file1.txt', 'directory1/'];
-    await repoUtils.copyRepoItems(repoUrl, itemsToCopy, destinationDir);
+    await repoTransferService.chocoCopyRepoItems(repoUrl, itemsToCopy, destinationDir);
     console.log(`Selected items copied to ${destinationDir}.`);
 
     // List repo content
-    const contents = await repoUtils.listRepoContents(repoUrl);
+    const contents = await repoTransferService.chocoListRepoContents(repoUrl);
     console.log(`Repository content: ${contents.join(', ')}`);
 
-    // FileSystemUtils example usage
-    const isDir = await fileSystemUtils.isDirectory('./');
+    // FileSystemHelper usage example
+    const isDir = await fileSystemHelper.chocoIsDirectory('./');
     console.log(`Is current directory a directory: ${isDir}`);
+
+    // GitClient usage example
+    const clonedRepoPath = await gitClient.chocoCloneRepo(repoUrl, './cloned-repo');
+    console.log(`Repository cloned to: ${clonedRepoPath}`);
 
   } catch (error: any) {
     console.error(`An error occurred: ${error.message}`);
