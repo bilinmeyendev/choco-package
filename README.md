@@ -31,15 +31,15 @@ To use this module, ensure you have Node.js and npm (or yarn) installed.
 
 ## Usage
 
-```typescript
-import { ChocoRepoTransferService, ChocoFileSystemHelper, ChocoGitClient } from 'choco-package';
+```javascript
+const { ChocoRepoTransferService, ChocoFileSystemHelper, ChocoGitClient } = require('choco-package');
 
 async function main() {
   const repoTransferService = new ChocoRepoTransferService();
   const fileSystemHelper = new ChocoFileSystemHelper();
   const gitClient = new ChocoGitClient();
 
-  const repoUrl = '[https://github.com/example/example-repo.git](https://github.com/example/example-repo.git)';
+  const repoUrl = 'https://github.com/example/example-repo.git';
   const destinationDir = './destination-directory';
 
   try {
@@ -64,13 +64,19 @@ async function main() {
     const clonedRepoPath = await gitClient.chocoCloneRepo(repoUrl, './cloned-repo');
     console.log(`Repository cloned to: ${clonedRepoPath}`);
 
-  } catch (error: any) {
+  } catch (error) {
     console.error(`An error occurred: ${error.message}`);
   }
 }
 
 main();
 ```
+
+# Changelog
+* **Typescript to JS:** Due to some problems, we maked it typescript to javascript.
+* **New version:** 1.3.7, came with problem fixes! if u got any errors u can report it to our github page.
+* **New functions:** In 1.3.7 new functions added: login(), logins with GithubCLI if exists, gitClone(repo), clones a repo that given.
+
 
 ## Docs
 Coming soon...
