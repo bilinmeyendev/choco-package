@@ -1,149 +1,82 @@
-import { simpleGit } from 'simple-git';
-import type { SimpleGit as ISimpleGit } from 'simple-git';
-import path from 'path';
-import fs from 'fs/promises';
+const simpleGit = require('simple-git');
+const path = require('path');
+const fs = require('fs').promises;
 
-console.log("Thanks for using us, if u got any errors u can report it to")
-
-export class ChocoGitClient {
-  private git: ISimpleGit;
-
+class ChocoGitClient {
   constructor() {
     this.git = simpleGit();
   }
 
-  /**
-   * Clones a Git repository from a given URL to a specified local path.
-   *
-   * @param repoUrl The URL of the Git repository to clone.
-   * @param targetPath The local path where the repository will be cloned.
-   * @returns A promise that resolves with the path to the cloned repository.
-   * @throws Error If the Git clone operation encounters an issue.
-   */
-  async chocoCloneRepo(repoUrl: string, targetPath: string): Promise<string> {
+  async chocoCloneRepo(repoUrl, targetPath) {
     try {
       await this.git.clone(repoUrl, targetPath);
       return targetPath;
-    } catch (e: any) {
+    } catch (e) {
       throw new Error(`Failed to clone ${repoUrl} to ${targetPath}: ${e?.message || 'Clone error'}`);
     }
   }
 }
 
-export class ChocoFileSystemHelper {
-  /**
-   * Moves a file or directory from a source path to a destination path.
-   *
-   * @param source The path of the file or directory to move.
-   * @param destination The path to where the file or directory will be moved.
-   * @returns A promise that resolves when the move operation is complete.
-   * @throws Error If the move operation fails.
-   */
-  async chocoMove(source: string, destination: string): Promise<void> {
+class ChocoFileSystemHelper {
+  async chocoMove(source, destination) {
     try {
       await fs.rename(source, destination);
-    } catch (e: any) {
+    } catch (e) {
       throw new Error(`Move failed: ${path.basename(source)} -> ${destination}: ${e?.message || 'Move error'}`);
     }
   }
 
-  /**
-   * Recursively removes a directory at a given path. Use with caution.
-   *
-   * @param dirPath The path of the directory to remove.
-   * @returns A promise that resolves when the directory is removed.
-   * @throws Error If the directory removal fails.
-   */
-  async chocoRemoveDir(dirPath: string): Promise<void> {
+  async chocoRemoveDir(dirPath) {
     try {
       await fs.rm(dirPath, { recursive: true, force: true });
-    } catch (e: any) {
+    } catch (e) {
       throw new Error(`Dir remove failed: ${dirPath}: ${e?.message || 'Remove error'}`);
     }
   }
 
-  /**
-   * Lists the names of files and directories within a given directory.
-   *
-   * @param dirPath The path of the directory to list.
-   * @returns A promise that resolves with an array of the names of the files and directories.
-   * @throws Error If reading the directory fails.
-   */
-  async chocoListDirContents(dirPath: string): Promise<string[]> {
+  async chocoListDirContents(dirPath) {
     try {
       return await fs.readdir(dirPath);
-    } catch (e: any) {
+    } catch (e) {
       throw new Error(`Dir read failed: ${dirPath}: ${e?.message || 'Read error'}`);
     }
   }
 
-  /**
-   * Checks if a given path points to a directory.
-   *
-   * @param filePath The path to check.
-   * @returns A promise that resolves with true if the path is a directory, false otherwise.
-   */
-  async chocoIsDirectory(filePath: string): Promise<boolean> {
+  async chocoIsDirectory(filePath) {
     try {
       const stats = await fs.stat(filePath);
       return stats.isDirectory();
-    } catch (e: any) {
+    } catch (e) {
       return false;
     }
   }
 
-  /**
-   * Creates a directory at the given path if it does not already exist.
-   *
-   * @param dirPath The path of the directory to ensure existence of.
-   * @returns A promise that resolves when the directory exists.
-   * @throws Error If the directory creation fails (and it didn't already exist).
-   */
-  async chocoEnsureDirExists(dirPath: string): Promise<void> {
+  async chocoEnsureDirExists(dirPath) {
     try {
       await fs.mkdir(dirPath, { recursive: true });
-    } catch (e: any) {
+    } catch (e) {
       if (e?.code !== 'EEXIST') {
         throw new Error(`Dir create failed: ${dirPath}: ${e?.message || 'Create error'}`);
       }
     }
   }
 
-  /**
-   * Copies a file from a source path to a destination path.
-   *
-   * @param source The path of the file to copy.
-   * @param destination The path where the file will be copied.
-   * @returns A promise that resolves when the copy operation is complete.
-   * @throws Error If the copy operation fails.
-   */
-  async chocoCopyFile(source: string, destination: string): Promise<void> {
+  async chocoCopyFile(source, destination) {
     try {
       await fs.copyFile(source, destination);
-    } catch (e: any) {
+    } catch (e) {
       throw new Error(`File copy failed: ${path.basename(source)} -> ${destination}: ${e?.message || 'Copy error'}`);
     }
   }
 }
 
-export class ChocoRepoTransferService {
-  private gitClient: ChocoGitClient;
-  private fsHelper: ChocoFileSystemHelper;
-
+class ChocoRepoTransferService {
   constructor() {
     this.gitClient = new ChocoGitClient();
     this.fsHelper = new ChocoFileSystemHelper();
   }
 
-  /**
-   * Clones a Git repository and moves its top-level contents to a specified directory.
-   *
-   * @param repoUrl The URL of the Git repository to clone.
-   * @param destinationDir The directory where the contents of the cloned repository will be moved. Defaults to the current working directory.
-   * @returns A promise that resolves with the destination directory path.
-   * @throws Error If cloning or moving fails.
-   */
-  async chocoTransferRepoContents(repoUrl: string, destinationDir: string = process.cwd()): Promise<string> {
+  async chocoTransferRepoContents(repoUrl, destinationDir = process.cwd()) {
     try {
       const repoName = repoUrl.split('/').pop()?.replace(/\.git$/, '') || 'temp_repo';
       const tempDir = path.join(process.cwd(), `temp_${repoName}_${Date.now()}`);
@@ -162,22 +95,12 @@ export class ChocoRepoTransferService {
       await this.fsHelper.chocoRemoveDir(tempDir);
       return destinationDir;
 
-    } catch (e: any) {
+    } catch (e) {
       throw new Error(`Repo transfer failed: ${repoUrl}: ${e?.message || 'Transfer error'}`);
     }
   }
 
-  /**
-   * Clones a Git repository and copies specific files or directories to a destination directory.
-   * Attempts to handle both files and directories.
-   *
-   * @param repoUrl The URL of the Git repository to clone.
-   * @param itemsToCopy An array of file or directory names to copy.
-   * @param destinationDir The directory where the specified items will be copied. Defaults to the current working directory.
-   * @returns A promise that resolves with the destination directory path.
-   * @throws Error If cloning or copying fails.
-   */
-  async chocoCopyRepoItems(repoUrl: string, itemsToCopy: string[], destinationDir: string = process.cwd()): Promise<string> {
+  async chocoCopyRepoItems(repoUrl, itemsToCopy, destinationDir = process.cwd()) {
     try {
       const repoName = repoUrl.split('/').pop()?.replace(/\.git$/, '') || 'temp_repo';
       const tempDir = path.join(process.cwd(), `temp_${repoName}_${Date.now()}`);
@@ -202,19 +125,12 @@ export class ChocoRepoTransferService {
       await this.fsHelper.chocoRemoveDir(tempDir);
       return destinationDir;
 
-    } catch (e: any) {
+    } catch (e) {
       throw new Error(`Repo items copy failed: ${repoUrl}: ${e?.message || 'Copy error'}`);
     }
   }
 
-  /**
-   * Clones a Git repository and lists its top-level contents.
-   *
-   * @param repoUrl The URL of the Git repository to clone.
-   * @returns A promise that resolves with an array of the top-level file and directory names.
-   * @throws Error If cloning or listing fails.
-   */
-  async chocoListRepoContents(repoUrl: string): Promise<string[]> {
+  async chocoListRepoContents(repoUrl) {
     try {
       const repoName = repoUrl.split('/').pop()?.replace(/\.git$/, '') || 'temp_repo';
       const tempDir = path.join(process.cwd(), `temp_${repoName}_${Date.now()}`);
@@ -223,8 +139,87 @@ export class ChocoRepoTransferService {
       const contents = await this.fsHelper.chocoListDirContents(clonedPath);
       await this.fsHelper.chocoRemoveDir(tempDir);
       return contents;
-    } catch (e: any) {
+    } catch (e) {
       throw new Error(`Repo contents list failed: ${repoUrl}: ${e?.message || 'List error'}`);
     }
   }
+}
+const { exec, spawn } = require('child_process');
+
+/**
+ * Checks if GithubCLI is installed and then attempts to log in by running "gh auth login".
+ * Note: This function will likely require manual interaction from the user
+ * in the terminal or a web browser to complete the login process.
+ * @returns {Promise<string>} A Promise that resolves with the stdout of the login process if successful.
+ * @throws {Error} If GithubCLI is not found or if the login process fails.
+ */
+async function login() {
+  return new Promise((resolve, reject) => {
+    exec('gh --version', (error, stdout, stderr) => {
+      if (error) {
+        return reject(new Error("GithubCLI not found or not executable. Please download and install it."));
+      }
+
+      const p = spawn("gh", ["auth", "login"]);
+      let stdoutData = '';
+      let stderrData = '';
+
+      p.stdout.on('data', (data) => {
+        stdoutData += data.toString();
+        console.log(`stdout: ${data}`);
+      });
+
+      p.stderr.on('data', (data) => {
+        stderrData += data.toString();
+        console.error(`stderr: ${data}`);
+      });
+
+      p.on('close', (code) => {
+        if (code === 0) {
+          resolve(stdoutData);
+        } else {
+          reject(new Error(`GitHub CLI login failed with exit code ${code}. Error (stderr): ${stderrData}`));
+        }
+      });
+      loginProcess.on('error', (err) => {
+        reject(new Error(`Failed to start GitHub CLI login process: ${err.message}`));
+      });
+    });
+  });
+}
+
+/**
+ * Clones a repo by running "git clone <repo>"
+ * 
+ * @param repoURL Repo to copy.
+ * @example
+ * const { gitClone } = require("choco-package")
+ * 
+ * gitClone("https://github.com/bilinmeyendev/choco-package")
+ */
+/**
+ * Clones a Git repository from the given URL to the specified local path.
+ * @param {string} repoURL - The URL of the Git repository to clone.
+ * @param {string} targetPath - The local path where the repository should be cloned.
+ * @returns {Promise<string>} A Promise that resolves with a success message upon completion,
+ * or rejects with an error message if cloning fails.
+ */
+function gitClone(repoURL, targetPath = '.') {
+  return new Promise((resolve, reject) => {
+    exec(`git clone "${repoURL}" "${path.resolve(targetPath)}"`, (error, stdout, stderr) => {
+      if (error) {
+        reject(new Error(`Git clone failed: ${stderr}`));
+        return;
+      }
+      resolve(`Git repository cloned successfully to: ${path.resolve(targetPath)}`);
+    });
+  });
+}
+
+module.exports = {
+  ChocoGitClient,
+  ChocoFileSystemHelper,
+  ChocoRepoTransferService,
+  login,
+  gitClone
 }
