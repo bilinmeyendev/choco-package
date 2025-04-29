@@ -1,1 +1,0 @@
--if exists .js check { unable =- exit& status =- no300&, statusmsg =- ERR_NO_JS_FOUND_[NO300] }
